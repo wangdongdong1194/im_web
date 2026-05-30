@@ -49,7 +49,9 @@
 
     .user-badge {
         width: 40px;
+        min-width: 40px;
         height: 40px;
+        min-height: 40px;
         border-radius: 12px;
         border: 0;
         background: linear-gradient(135deg, #53d769, #2ca855);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { computed, ref } from 'vue'
+    import { computed, ref, watch, nextTick, onMounted } from 'vue'
     import type { ChatMessage } from '../../types/types'
 
     const props = defineProps<{
@@ -15,6 +15,50 @@
     const draft = ref('')
 
     const hasMessages = computed(() => props.messages.length > 0)
+
+    const messageListRef = ref<HTMLElement | null>(null)
+
+    // small threshold to account for fractional pixels
+    const BOTTOM_THRESHOLD = 10
+
+    function isAtBottom(el: HTMLElement) {
+        return el.scrollTop + el.clientHeight >= el.scrollHeight - BOTTOM_THRESHOLD
+    }
+
+    let shouldAutoScroll = false
+
+    // Before DOM updates for messages, record whether we're at the bottom.
+    watch(
+        () => props.messages.length,
+        () => {
+            const el = messageListRef.value
+            if (!el) return
+            shouldAutoScroll = isAtBottom(el)
+        },
+        { flush: 'pre' }
+    )
+
+    // After DOM updates, scroll to bottom only if we were at bottom before the update.
+    watch(
+        () => props.messages.length,
+        async () => {
+            await nextTick()
+            const el = messageListRef.value
+            if (!el) return
+            if (shouldAutoScroll) {
+                el.scrollTop = el.scrollHeight
+            }
+        },
+        { flush: 'post' }
+    )
+
+    onMounted(() => {
+        // initial scroll to bottom if there are messages
+        const el = messageListRef.value
+        if (el && props.messages.length > 0) {
+            nextTick(() => (el.scrollTop = el.scrollHeight))
+        }
+    })
 
     function submitMessage() {
         const text = draft.value.trim()
@@ -33,7 +77,7 @@
             <p>{{ props.subtitle }}</p>
         </header>
 
-        <div class="message-list">
+        <div class="message-list" ref="messageListRef">
             <div v-if="!hasMessages" class="empty">还没有消息，开始聊天吧</div>
 
             <article v-for="item in props.messages" :key="item.id" class="message-item" :class="item.sender">
@@ -96,11 +140,14 @@
 
     .message-item p {
         margin: 0;
-        padding: 10px 12px;
+        padding: 10px;
         border-radius: 12px;
         background: #fff;
         line-height: 1.4;
         width: fit-content;
+        text-align: justify;
+        word-wrap: break-word;
+        word-break: break-all;
     }
 
     .message-item span {
