@@ -30,23 +30,22 @@ const router = createRouter({
   ],
 })
 
-// Route guard: redirect logged-in users away from auth pages,
-// and redirect unauthenticated users to /login for protected routes.
-router.beforeEach((to, from, next) => {
+// 新版守卫：取消 next，用 return 控制跳转
+router.beforeEach((to) => {
   const token = localStorage.getItem('auth_token')
   const publicPaths = ['/login', '/register', '/socket-demo']
 
-  // If already logged in, don't allow visiting login/register
-  if (token && (to.path === '/login' || to.path === '/register')) {
-    return next('/')
+  // 已登录不能进登录/注册页 → 跳首页
+  if (token && ['/login', '/register'].includes(to.path)) {
+    return '/'
   }
 
-  // If not logged in and trying to access a protected route, redirect to /login
+  // 未登录访问受保护页面 → 跳登录
   if (!token && !publicPaths.includes(to.path)) {
-    return next('/login')
+    return '/login'
   }
 
-  next()
+  // 其余全部放行(return undefined / true 都可以)
 })
 
 export default router

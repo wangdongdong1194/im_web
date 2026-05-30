@@ -4,6 +4,7 @@ import * as authApi from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('auth_token'))
+  const erp = ref<string | null>(localStorage.getItem('auth_erp'))
 
   const isLoggedIn = computed(() => !!token.value)
 
@@ -16,10 +17,20 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function setErp(e: string | null) {
+    erp.value = e
+    if (e) {
+      localStorage.setItem('auth_erp', e)
+    } else {
+      localStorage.removeItem('auth_erp')
+    }
+  }
+
   async function login(erp: string, password: string) {
     const data = await authApi.login(erp, password)
     if (data && data.token) {
       setToken(data.token)
+      setErp(erp)
       return data
     }
     throw new Error('登录响应缺少 token')
@@ -29,13 +40,15 @@ export const useAuthStore = defineStore('auth', () => {
     const data = await authApi.register(erp, password, username, phone)
     if (data && data.token) {
       setToken(data.token)
+      setErp(erp)
     }
     return data
   }
 
   function logout() {
     setToken(null)
+    setErp(null)
   }
 
-  return { token, isLoggedIn, login, logout, setToken, register }
+  return { token, erp, isLoggedIn, login, logout, setToken, setErp, register }
 })

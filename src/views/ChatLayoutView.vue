@@ -1,9 +1,11 @@
 <script setup lang="ts">
-    import { computed, ref } from 'vue'
+    import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+    import { io, Socket } from 'socket.io-client'
     import ChatChatWindow from '@/components/chat/ChatWindow.vue'
     import ChatContactsPanel from '@/components/chat/ChatContactsPanel.vue'
     import ChatConversationList from '@/components/chat/ChatConversationList.vue'
     import ChatSidebar from '@/components/chat/ChatSidebar.vue'
+    import { useAuthStore } from '@/stores/auth'
     import type { ChatMessage, ConversationPreview } from '@/types/types'
 
     const activeMenu = ref('chat')
@@ -68,6 +70,106 @@
             return { ...item, unread: 0 }
         })
     }
+
+    // --- socket integration (simplified, based on SocketDemoView) ---
+    function getDefaultServerUrl() {
+        const currentPort = window.location.port
+        if (currentPort === '5173') return 'http://127.0.0.1:3003'
+        if (currentPort === '5174') return 'http://127.0.0.1:3004'
+        return 'http://127.0.0.1:3003'
+    }
+
+    const serverUrl = ref(getDefaultServerUrl())
+    const socketPath = ref('/socket.io')
+    let socket: Socket | null = null
+    const connected = ref(false)
+
+    const connectLabel = computed(() => (connected.value ? 'Disconnect' : 'Connect'))
+
+    function bindSocketEvents(currentSocket: Socket) {
+        currentSocket.on('connect', () => {
+            connected.value = true
+            // after connecting, bind the user by ERP if available
+            console.log('ERP--->', auth.erp);
+            if (auth.erp) {
+                currentSocket.emit('bind_user', { erp: auth.erp })
+            }
+        })
+
+        currentSocket.on('disconnect', () => {
+            connected.value = false
+        })
+
+        currentSocket.on('group_message', (data: any) => {
+            try {
+                const cid = Number(data.conversationId)
+                const now = data.time || new Date().toLocaleTimeString()
+                const payload: ChatMessage = { id: (messagesByConversation.value[cid]?.length || 0) + 1, sender: 'other', text: data.message, time: now }
+                const arr = messagesByConversation.value[cid] ?? []
+                messagesByConversation.value = { ...messagesByConversation.value, [cid]: [...arr, payload] }
+                conversations.value = conversations.value.map((item) => (item.id === cid ? { ...item, lastMessage: data.message, lastTime: now } : item))
+            } catch (e) {
+                console.warn('malformed group_message', data)
+            }
+        })
+
+        currentSocket.on('private_message', (data: any) => {
+            try {
+                const cid = Number(data.conversationId || data.from)
+                const now = data.time || new Date().toLocaleTimeString()
+                const payload: ChatMessage = { id: (messagesByConversation.value[cid]?.length || 0) + 1, sender: 'other', text: data.message, time: now }
+                const arr = messagesByConversation.value[cid] ?? []
+                messagesByConversation.value = { ...messagesByConversation.value, [cid]: [...arr, payload] }
+                conversations.value = conversations.value.map((item) => (item.id === cid ? { ...item, lastMessage: data.message, lastTime: now } : item))
+            } catch (e) {
+                console.warn('malformed private_message', data)
+            }
+        })
+    }
+
+    const auth = useAuthStore()
+
+    function connectSocket() {
+        if (socket?.connected) {
+            socket.disconnect()
+            return
+        }
+
+        // require token to connect
+        if (!auth.token) {
+            // show a small alert; user can customize UI later
+            window.alert('请先登录以建立 socket 连接')
+            return
+        }
+
+        if (socket) {
+            socket.removeAllListeners()
+        }
+        console.log('Connecting to socket with token', auth.token)
+        socket = io(serverUrl.value, { path: socketPath.value, auth: { token: auth.token } })
+        bindSocketEvents(socket)
+    }
+    onMounted(() => {
+        // auto-connect if token exists when entering the view
+        if (auth.token && auth.erp) {
+            connectSocket()
+        }
+    })
+
+    function disconnectSocket() {
+        if (!socket) return
+        socket.removeAllListeners()
+        socket.disconnect()
+        socket = null
+        connected.value = false
+    }
+
+    onBeforeUnmount(() => {
+        if (socket) {
+            socket.removeAllListeners()
+            socket.disconnect()
+        }
+    })
 
     function sendMessage(text: string) {
         if (!activeConversation.value) {
