@@ -1,9 +1,9 @@
 <script setup lang="ts">
     import { computed, ref } from 'vue'
-    import WechatChatWindow from '@/components/wechat/WechatChatWindow.vue'
-    import WechatContactsPanel from '@/components/wechat/WechatContactsPanel.vue'
-    import WechatConversationList from '@/components/wechat/WechatConversationList.vue'
-    import WechatSidebar from '@/components/wechat/WechatSidebar.vue'
+    import ChatChatWindow from '@/components/chat/ChatWindow.vue'
+    import ChatContactsPanel from '@/components/chat/ChatContactsPanel.vue'
+    import ChatConversationList from '@/components/chat/ChatConversationList.vue'
+    import ChatSidebar from '@/components/chat/ChatSidebar.vue'
     import type { ChatMessage, ConversationPreview } from '@/types/types'
 
     const activeMenu = ref('chat')
@@ -102,33 +102,33 @@
 </script>
 
 <template>
-    <main class="wechat-page">
-        <WechatSidebar :active-menu="activeMenu" @change="activeMenu = $event" />
+    <main class="chat-page">
+        <ChatSidebar :active-menu="activeMenu" @change="activeMenu = $event" />
 
         <template v-if="activeMenu === 'contacts'">
-            <WechatContactsPanel />
+            <ChatContactsPanel />
         </template>
 
         <template v-else>
-            <WechatConversationList :conversations="conversations" :active-conversation-id="activeConversationId"
+            <ChatConversationList :conversations="conversations" :active-conversation-id="activeConversationId"
                 @select="selectConversation" />
 
-            <WechatChatWindow :title="activeConversation?.name ?? '会话'"
+            <ChatChatWindow :title="activeConversation?.name ?? '会话'"
                 :subtitle="activeMenu === 'chat' ? '在线' : '功能演示模式'" :messages="activeMessages" @send="sendMessage" />
         </template>
     </main>
 </template>
 
 <style scoped>
-    .wechat-page {
-        min-height: 100vh;
+    .chat-page {
+        height: 100vh;
         display: flex;
         background: radial-gradient(circle at 20% 0%, #f4fbf5 0%, #edf5ef 32%, #e8f0ea 100%);
     }
 
     @media (max-width: 900px) {
-        .wechat-page {
+        /* .chat-page {
             display: block;
-        }
+        } */
     }
 </style>

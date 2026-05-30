@@ -51,6 +51,7 @@
 <style scoped>
     .conversation-list {
         width: 300px;
+        min-width: 300px;
         border-right: 1px solid #e9edf2;
         background: #f7f9fb;
         display: flex;
@@ -139,9 +140,9 @@
     }
 
     @media (max-width: 900px) {
-        .conversation-list {
+        /* .conversation-list {
             width: 100%;
             border-right: 0;
-        }
+        } */
     }
 </style>

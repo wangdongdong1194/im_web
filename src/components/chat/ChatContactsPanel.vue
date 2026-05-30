@@ -164,13 +164,13 @@
     }
 
     @media (max-width: 900px) {
-        .contact-list {
+        /* .contact-list {
             width: 100%;
             border-right: 0;
-        }
+        } */
 
-        .contact-detail {
+        /* .contact-detail {
             display: none;
-        }
+        } */
     }
 </style>

@@ -54,7 +54,7 @@
         background: #f4f8f5;
         display: flex;
         flex-direction: column;
-        min-width: 0;
+        min-width: 400px;
     }
 
     header {
@@ -100,6 +100,7 @@
         border-radius: 12px;
         background: #fff;
         line-height: 1.4;
+        width: fit-content;
     }
 
     .message-item span {
@@ -142,8 +143,8 @@
     }
 
     @media (max-width: 900px) {
-        .chat-window {
+        /* .chat-window {
             display: none;
-        }
+        } */
     }
 </style>
