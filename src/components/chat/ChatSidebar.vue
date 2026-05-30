@@ -45,6 +45,7 @@
         align-items: center;
         padding: 14px 0;
         gap: 14px;
+        overflow-y: auto;
     }
 
     .user-badge {

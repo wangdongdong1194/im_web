@@ -46,6 +46,14 @@
         try {
             // use auth.register which sets token if backend returns it
             await auth.register(e, p, u, ph)
+            // if backend didn't return token, try to login automatically
+            if (!auth.isLoggedIn) {
+                try {
+                    await auth.login(e, p)
+                } catch {
+                    // ignore login error; route guard will redirect to /login if needed
+                }
+            }
             router.replace('/')
         } catch (err: any) {
             error.value = err?.message || '注册失败'
