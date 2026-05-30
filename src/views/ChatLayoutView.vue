@@ -84,14 +84,11 @@
     let socket: Socket | null = null
     const connected = ref(false)
 
-    const connectLabel = computed(() => (connected.value ? 'Disconnect' : 'Connect'))
-
     function bindSocketEvents(currentSocket: Socket) {
         currentSocket.on('connect', () => {
             connected.value = true
             // after connecting, bind the user by ERP if available
-            console.log('ERP--->', auth.erp);
-            if (auth.erp) {
+            if (auth.erp && auth.token) {
                 currentSocket.emit('bind_user', { erp: auth.erp })
             }
         })
